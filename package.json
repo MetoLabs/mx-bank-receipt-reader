@@ -1,0 +1,54 @@
+{
+  "name": "mx-bank-receipt-reader",
+  "version": "0.0.1",
+  "description": "A library for reading and extracting data from Mexican bank receipts",
+  "type": "module",
+  "main": "dist/bank-receipt-reader.cjs",
+  "browser": "dist/bank-receipt-reader.browser.js",
+  "module": "dist/bank-receipt-reader.esm.js",
+  "files": [
+    "dist",
+    "src",
+    "cli.js"
+  ],
+  "bin": {
+    "bank-reader": "./cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MetoLabs/mx-bank-receipt-reader.git"
+  },
+  "author": {
+    "name": "Geradrum",
+    "url": "https://github.com/geradrum"
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "tesseract.js": "^6.0.1",
+    "yargs": "17.7.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.8",
+    "@rollup/plugin-json": "^6.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "rollup": "^3.29.4",
+    "rollup-plugin-node-polyfills": "^0.2.1"
+  },
+  "keywords": [
+    "bank",
+    "receipt",
+    "ocr",
+    "mexico",
+    "spei",
+    "bbva",
+    "banorte",
+    "santander",
+    "hsbc",
+    "scotiabank"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,48 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Mac system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Mac resource forks
+._*
+
+# Thumbnails
+Icon?
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Build / dist
+dist/
+build/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# VSCode
+.vscode/
+
+# Tesseract traineddata
+*.traineddata
+models/*.traineddata
+
+# Optional: coverage
+coverage/
+
+# Optional: OS specific
+*.swp
