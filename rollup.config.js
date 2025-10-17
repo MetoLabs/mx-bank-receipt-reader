@@ -2,6 +2,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 import json from '@rollup/plugin-json';
+import inject from '@rollup/plugin-inject';
 
 export default [
     {
@@ -19,8 +20,17 @@ export default [
         plugins: [
             nodeResolve({ browser: true }),
             commonjs(),
-            nodePolyfills(),
-            json()
+            json(),
+            {
+                name: 'global-polyfill',
+                renderChunk(code) {
+                    return {
+                        code: 'var global = window;\n' + code,
+                        map: null
+                    };
+                }
+            },
+            nodePolyfills()
         ]
     },
     {

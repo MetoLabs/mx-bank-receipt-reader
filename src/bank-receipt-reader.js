@@ -1,7 +1,5 @@
-// Use a more compatible approach for environment detection
 const isBrowser = typeof window !== 'undefined';
 
-// Import Node.js modules - these will be marked as external in Rollup config
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createWorker } from 'tesseract.js';
@@ -40,7 +38,6 @@ class BankReceiptReader {
     _setupModelsPath() {
         if (!isBrowser && typeof process !== 'undefined' && process.cwd) {
             try {
-                // In Node.js environment, set up the models path
                 const __filename = fileURLToPath(import.meta.url);
                 const __dirname = path.dirname(__filename);
                 this.modelsPath = process.cwd();
