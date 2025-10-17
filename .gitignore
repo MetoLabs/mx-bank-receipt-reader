@@ -46,3 +46,6 @@ coverage/
 
 # Optional: OS specific
 *.swp
+
+# IDEA
+/.idea
