@@ -1,15 +1,25 @@
 {
   "name": "mx-bank-receipt-reader",
   "version": "0.0.1",
-  "description": "A library for reading and extracting data from Mexican bank receipts",
+  "description": "A library for reading and extracting data from Mexican bank receipts (browser and Node.js compatible)",
   "type": "module",
   "main": "dist/bank-receipt-reader.cjs",
-  "browser": "dist/bank-receipt-reader.browser.js",
   "module": "dist/bank-receipt-reader.esm.js",
+  "browser": "dist/bank-receipt-reader.browser.js",
+  "exports": {
+    ".": {
+      "import": "./dist/bank-receipt-reader.esm.js",
+      "require": "./dist/bank-receipt-reader.cjs",
+      "browser": "./dist/bank-receipt-reader.browser.js"
+    },
+    "./cli": "./cli.js"
+  },
   "files": [
     "dist",
     "src",
-    "cli.js"
+    "cli.js",
+    "README.md",
+    "LICENSE"
   ],
   "bin": {
     "bank-reader": "./cli.js"
@@ -29,11 +39,10 @@
   },
   "dependencies": {
     "tesseract.js": "^6.0.1",
-    "yargs": "17.7.2"
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.8",
-    "@rollup/plugin-inject": "^5.0.5",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "rollup": "^3.29.4",
@@ -49,7 +58,9 @@
     "banorte",
     "santander",
     "hsbc",
-    "scotiabank"
+    "scotiabank",
+    "tesseract",
+    "ocr-reader"
   ],
   "license": "MIT"
 }

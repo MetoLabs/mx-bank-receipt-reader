@@ -1,8 +1,8 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import nodePolyfills from 'rollup-plugin-node-polyfills';
 import json from '@rollup/plugin-json';
 import inject from '@rollup/plugin-inject';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 export default [
     {
@@ -11,12 +11,7 @@ export default [
             file: 'dist/bank-receipt-reader.browser.js',
             format: 'iife',
             name: 'BankReceiptReader',
-            globals: {
-                'path': 'path',
-                'url': 'url'
-            }
         },
-        external: ['path', 'url'],
         plugins: [
             nodeResolve({ browser: true }),
             commonjs(),
@@ -24,40 +19,36 @@ export default [
             {
                 name: 'global-polyfill',
                 renderChunk(code) {
-                    return {
-                        code: 'var global = window;\n' + code,
-                        map: null
-                    };
+                    return { code: 'var global = window;\n' + code, map: null };
                 }
             },
             nodePolyfills()
-        ]
+        ],
+        external: ['path'],
     },
     {
         input: 'src/bank-receipt-reader.js',
         output: {
             file: 'dist/bank-receipt-reader.cjs',
             format: 'cjs',
-            exports: 'default'
+            exports: 'default',
         },
-        external: ['path', 'url'],
         plugins: [
             nodeResolve(),
             commonjs(),
-            json()
-        ]
+            json(),
+        ],
     },
     {
         input: 'src/bank-receipt-reader.js',
         output: {
             file: 'dist/bank-receipt-reader.esm.js',
-            format: 'esm'
+            format: 'esm',
         },
-        external: ['path', 'url'],
         plugins: [
             nodeResolve(),
             commonjs(),
-            json()
-        ]
-    }
+            json(),
+        ],
+    },
 ];

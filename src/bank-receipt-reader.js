@@ -1,8 +1,5 @@
-const isBrowser = typeof window !== 'undefined';
-
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { createWorker } from 'tesseract.js';
+
 import AfirmeSpeiProcessor from './processors/afirme/afirme-spei-processor.js';
 import BanbajioSpeiProcessor from './processors/banbajio/banbajio-spei-processor.js';
 import BanorteSpeiProcessor from './processors/banorte/banorte-spei-processor.js';
@@ -18,33 +15,11 @@ import ScotiabankSpeiProcessor from './processors/scotiabank/scotiabank-spei-pro
 
 class BankReceiptReader {
     /**
-     * Creates a new BankReceiptReader instance.
-     * Detects the runtime environment and initializes the bank processors registry.
+     * Creates a new BankReceiptReader instance for browser use.
+     * Initializes the available processors registry.
      */
     constructor() {
-        this.isBrowser = isBrowser;
         this.processors = this._initializeProcessors();
-
-        if (!this.isBrowser) {
-            this._setupModelsPath();
-        }
-    }
-
-    /**
-     * Setup the models path (Node.js only).
-     *
-     * @private
-     */
-    _setupModelsPath() {
-        if (!isBrowser && typeof process !== 'undefined' && process.cwd) {
-            try {
-                const __filename = fileURLToPath(import.meta.url);
-                const __dirname = path.dirname(__filename);
-                this.modelsPath = process.cwd();
-            } catch (error) {
-                console.warn('Could not set up models path:', error);
-            }
-        }
     }
 
     /**
@@ -72,69 +47,13 @@ class BankReceiptReader {
     }
 
     /**
-     * Creates worker options with langPath configuration for CLI.
-     *
-     * @returns {object} Worker options
-     * @private
-     */
-    _getWorkerOptions() {
-        const options = {};
-
-        if (!this.isBrowser && this.modelsPath) {
-            options.langPath = this.modelsPath;
-        }
-
-        return options;
-    }
-
-    /**
-     * Runs OCR, identifies the bank, and extracts structured data from the receipt image.
-     * - In browsers, pass an image-like input supported by Tesseract.js (e.g., File, Blob, HTMLImageElement).
-     * - In CLI/Node, pass a filesystem path to the image.
-     *
-     * Returns:
-     * - ReadReceiptSuccess on success,
-     * - ReadReceiptFailure on error,
-     * - null when the bank cannot be identified from the OCR text.
-     *
-     * @param {BrowserImageInput|string} imageInput Browser image input or a file path (CLI/Node).
-     * @returns {Promise<ReadReceiptResult|null>}
-     */
-    async readReceipt(imageInput) {
-        try {
-            const text = await this.extractText(imageInput);
-            const bankInfo = this.identifyBank(text);
-
-            if (!bankInfo) {
-                return null;
-            }
-
-            const extractedData = bankInfo.processor.extract(text);
-
-            return {
-                success: true,
-                bank: bankInfo.name,
-                type: bankInfo.type,
-                data: extractedData
-            };
-
-        } catch (error) {
-            return {
-                success: false,
-                error: error.message,
-            };
-        }
-    }
-
-    /**
      * Performs OCR using Tesseract.js with optimized settings for bank receipts.
      *
-     * @param {BrowserImageInput|string} imageInput Image input for the current environment.
-     * @returns {Promise<string>} Recognized UTF-8 text from the image.
+     * @param {File|Blob|HTMLImageElement|string} imageInput
+     * @returns {Promise<string>} Recognized UTF-8 text.
      */
     async extractText(imageInput) {
-        const workerOptions = this._getWorkerOptions();
-        const worker = await createWorker('spa+eng', 3, workerOptions);
+        const worker = await createWorker('spa+eng', 3);
 
         try {
             await worker.setParameters({
@@ -142,7 +61,7 @@ class BankReceiptReader {
             });
 
             const result = await worker.recognize(imageInput);
-            return result.data.text;
+            return result.data.text.trim();
 
         } finally {
             await worker.terminate();
@@ -150,10 +69,10 @@ class BankReceiptReader {
     }
 
     /**
-     * Attempts to identify the bank and receipt subtype from raw OCR text.
+     * Identifies the bank and receipt subtype from OCR text.
      *
-     * @param {string} text Full OCR text retrieved by Tesseract.js.
-     * @returns {object|null} Matching bank info or null if no patterns matched.
+     * @param {string} text OCR text.
+     * @returns {object|null}
      */
     identifyBank(text) {
         const bankPatterns = [
@@ -230,6 +149,32 @@ class BankReceiptReader {
         }
 
         return null;
+    }
+
+    /**
+     * Reads and processes a bank receipt from an image.
+     *
+     * @param {File|Blob|HTMLImageElement|string} imageInput
+     * @returns {Promise<object|null>}
+     */
+    async readReceipt(imageInput) {
+        try {
+            const text = await this.extractText(imageInput);
+            const bankInfo = this.identifyBank(text);
+
+            if (!bankInfo) return null;
+
+            const extractedData = bankInfo.processor.extract(text);
+
+            return {
+                success: true,
+                bank: bankInfo.name,
+                type: bankInfo.type,
+                data: extractedData,
+            };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     }
 }
 
