@@ -1,7 +1,7 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import inject from '@rollup/plugin-inject';
+import terser from '@rollup/plugin-terser';
 import nodePolyfills from 'rollup-plugin-node-polyfills';
 
 export default [
@@ -22,7 +22,19 @@ export default [
                     return { code: 'var global = window;\n' + code, map: null };
                 }
             },
-            nodePolyfills()
+            {
+                name: 'ignore-encoding',
+                resolveId(source) {
+                    if (source === 'encoding') return source;
+                    return null;
+                },
+                load(id) {
+                    if (id === 'encoding') return 'export default {};';
+                    return null;
+                }
+            },
+            nodePolyfills(),
+            terser({ format: { comments: false } }),
         ],
         external: ['path'],
     },
@@ -34,7 +46,7 @@ export default [
             exports: 'default',
         },
         plugins: [
-            nodeResolve(),
+            nodeResolve({ browser: true, preferBuiltins: false }),
             commonjs(),
             json(),
         ],
@@ -46,7 +58,7 @@ export default [
             format: 'esm',
         },
         plugins: [
-            nodeResolve(),
+            nodeResolve({ browser: true, preferBuiltins: false }),
             commonjs(),
             json(),
         ],
