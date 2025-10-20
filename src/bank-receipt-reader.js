@@ -14,20 +14,14 @@ import SantanderThirdPartyProcessor from './processors/santander/santander-third
 import ScotiabankSpeiProcessor from './processors/scotiabank/scotiabank-spei-processor.js';
 
 class BankReceiptReader {
-    /**
-     * Creates a new BankReceiptReader instance for browser use.
-     * Initializes the available processors registry.
-     */
     constructor() {
         this.processors = this._initializeProcessors();
     }
 
     /**
-     * Initializes and returns the registry of available bank processors.
-     * Keys follow the "<bank>_<type>" convention, e.g., "bbva_spei".
-     *
-     * @returns {Record<string, BaseProcessor>}
+     * Initializes all available bank processors
      * @private
+     * @returns {Object} Object containing all initialized processors
      */
     _initializeProcessors() {
         return {
@@ -47,32 +41,106 @@ class BankReceiptReader {
     }
 
     /**
-     * Performs OCR using Tesseract.js with optimized settings for bank receipts.
-     *
-     * @param {File|Blob|HTMLImageElement|string} imageInput
-     * @returns {Promise<string>} Recognized UTF-8 text.
+     * Extracts text from an image using Tesseract.js
+     * @param {string|File|Blob} imageInput - Image file or URL to process
+     * @returns {Promise<string>} Extracted text from the image
      */
-    async extractText(imageInput) {
+    async extractTextFromImage(imageInput) {
         const worker = await createWorker('spa+eng', 3);
-
         try {
-            await worker.setParameters({
-                tessedit_pageseg_mode: '11',
-            });
-
+            await worker.setParameters({ tessedit_pageseg_mode: '11' });
             const result = await worker.recognize(imageInput);
             return result.data.text.trim();
-
         } finally {
             await worker.terminate();
         }
     }
 
     /**
-     * Identifies the bank and receipt subtype from OCR text.
-     *
-     * @param {string} text OCR text.
-     * @returns {object|null}
+     * Extracts text from a PDF using pdfjs-dist
+     * @param {File} file - PDF file to extract text from
+     * @returns {Promise<string>} Extracted text from the PDF
+     */
+    async extractTextFromPdf(file) {
+        if (typeof window === 'undefined') {
+            throw new Error('PDF processing is only supported in browser environment');
+        }
+
+        if (!window.pdfjsLib) {
+            throw new Error('PDF.js library not loaded. Please include PDF.js in your HTML.');
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = window.pdfjsLib;
+
+        try {
+            console.log('Loading PDF document...');
+
+            const pdfDoc = await pdfjsLib.getDocument({
+                data: arrayBuffer,
+                disableWorker: true,
+            }).promise;
+
+            console.log(`PDF loaded successfully. Pages: ${pdfDoc.numPages}`);
+
+            let fullText = '';
+
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                console.log(`Processing page ${i}...`);
+                const page = await pdfDoc.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
+
+                if (page.cleanup) {
+                    page.cleanup();
+                }
+            }
+
+            if (pdfDoc.destroy) {
+                await pdfDoc.destroy();
+            }
+
+            return fullText.trim();
+
+        } catch (error) {
+            console.error('PDF extraction failed:', error);
+            throw new Error(`Failed to extract PDF text: ${error.message}`);
+        }
+    }
+
+    /**
+     * Detects the input type and extracts text accordingly
+     * @param {string|File|Blob} file - Input file (image URL, File, or Blob)
+     * @returns {Promise<string>} Extracted text from the input
+     * @throws {Error} When input type is invalid or unsupported
+     */
+    async extractText(file) {
+        if (typeof file === 'string') {
+            return this.extractTextFromImage(file);
+        }
+
+        if (!(file instanceof File || file instanceof Blob)) {
+            throw new Error('Invalid input type.');
+        }
+
+        const mimeType = file.type.toLowerCase();
+
+        if (mimeType === 'application/pdf') {
+            return this.extractTextFromPdf(file);
+        }
+
+        if (mimeType === 'image/jpeg' || mimeType === 'image/png') {
+            return this.extractTextFromImage(file);
+        }
+
+        throw new Error('Unsupported file type. Only JPG, PNG, and PDF are accepted.');
+    }
+
+    /**
+     * Identifies the bank and transaction type from extracted text
+     * @param {string} text - Text extracted from bank receipt
+     * @returns {Object|null} Object containing bank name, type and processor, or null if not identified
      */
     identifyBank(text) {
         const bankPatterns = [
@@ -85,65 +153,99 @@ class BankReceiptReader {
             },
             {
                 name: 'banbajio_spei',
-                patterns: [],
+                patterns: [
+                    /Banco del Bajío S.A./i,
+                    /BajioNet/i,
+                    /RFC: BBA940707IE1/i,
+                    /Transferencia Interbancaria SPEI/i,
+                ],
             },
             {
                 name: 'banorte_spei',
-                patterns: [],
+                patterns: [
+                    /Transferencias \/ Otros Bancos Nacional - SPEI \(Mismo día\)/i,
+                    /Banco Destino\s*[A-Z]/i,
+                    /Clave de Rastreo\s*\d{20,}/i,
+                ],
             },
             {
                 name: 'banorte_third_party',
-                patterns: [],
+                patterns: [
+                    /Transferencias a Cuentas de Terceros Banorte/i,
+                    /Titular de la Cuenta/i,
+                    /ID Tercero\s*AFB/i,
+                ],
             },
             {
                 name: 'banregio_spei',
-                patterns: [],
+                patterns: [
+                    /Tipo de Transferencia\s*Mismo día hábil \(SPEI\)/i,
+                    /Fecha de operación SPEI/i,
+                    /Banco\s*SANTANDER/i,
+                    /Clave de rastreo/i,
+                ],
             },
             {
                 name: 'banregio_third_party',
-                patterns: [],
+                patterns: [
+                    /Cuenta Origen Cuenta Destino Cantidad a Transferir Descripcion/i,
+                    /Banregio/i,
+                    /Verificador\s*[A-Z]/i,
+                ],
             },
             {
                 name: 'bbva_spei',
                 patterns: [
-                    /BNET[0-9A-Za-z]{20}/i,
+                    /BNET[0-9A-Za-z]{20}/i
                 ],
             },
             {
                 name: 'bbva_third_party',
                 patterns: [
-                    /transferencia a terceros/i
+                    /trasp ctas bbva/i,
+                ],
+            },
+            {
+                name: 'scotiabank_spei',
+                patterns: [
+                    /Scotiabank Inverlat S.A./i,
+                    /Impresión de Comprobante de Traspasos Otros Bancos/i,
+                    /Clave de Rastreo\s*\d{25,}/i
+                ],
+            },
+            {
+                name: 'santander_third_party',
+                patterns: [
+                    /Tipo de Operación:\s*Consulta de Movimientos/i,
+                    /Descripción:\s*CGO TRANS ELEC/i,
+                ],
+            },
+            {
+                name: 'santander_spei',
+                patterns: [
+                    /Tipo de Operación:\s*TRANSFERENCIA INTERBANCARIA/i,
+                    /Estado:\s*ENVIADA/i,
+                    /Cuenta Cargo:\s*\d+\s*-\s*[A-Z]/i,
                 ],
             },
             {
                 name: 'hsbc_spei',
-                patterns: [],
-            },
-            {
-                name: 'santander_spei',
-                patterns: [],
-            },
-            {
-                name: 'santander_third_party',
-                patterns: [],
-            },
-            {
-                name: 'scotiabank_spei',
-                patterns: [],
+                patterns: [
+                    /HSBC\s+Mexico/i,
+                    /Referencia\s+de\s+cliente\s*\d+/i,
+                    /Clave\s+de\s+rastreo\s*HSBC/i,
+                    /Narrativa\s+adicional\s*CGO\s+SPEI/i,
+                    /Nombre\s+del\s+banco\s*HSBC/i
+                ],
             },
         ];
 
         for (const bank of bankPatterns) {
-            const [name, ...typeParts] = bank.name.split('_');
-            const type = typeParts.join('_');
-
             for (const pattern of bank.patterns) {
                 if (pattern.test(text)) {
-                    return {
-                        name,
-                        type,
-                        processor: this.processors[bank.name],
-                    };
+                    const [name, ...typeParts] = bank.name.split('_');
+                    const type = typeParts.join('_');
+                    return { name, type, processor: this.processors[bank.name] };
                 }
             }
         }
@@ -152,17 +254,17 @@ class BankReceiptReader {
     }
 
     /**
-     * Reads and processes a bank receipt from an image.
-     *
-     * @param {File|Blob|HTMLImageElement|string} imageInput
-     * @returns {Promise<object|null>}
+     * Main method to read and process bank receipts
+     * @param {string|File|Blob} file - Bank receipt file (image or PDF)
+     * @returns {Promise<Object>} Processing result with bank information and extracted data
      */
-    async readReceipt(imageInput) {
+    async readReceipt(file) {
         try {
-            const text = await this.extractText(imageInput);
+            const text = await this.extractText(file);
+            console.log(text);
             const bankInfo = this.identifyBank(text);
 
-            if (!bankInfo) return null;
+            if (!bankInfo) return { success: false, error: 'Unknown bank type' };
 
             const extractedData = bankInfo.processor.extract(text);
 
@@ -173,6 +275,7 @@ class BankReceiptReader {
                 data: extractedData,
             };
         } catch (error) {
+            console.error(error);
             return { success: false, error: error.message };
         }
     }

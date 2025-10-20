@@ -11,6 +11,7 @@ export default [
             file: 'dist/bank-receipt-reader.browser.js',
             format: 'iife',
             name: 'BankReceiptReader',
+            interop: 'default'
         },
         plugins: [
             nodeResolve({ browser: true }),

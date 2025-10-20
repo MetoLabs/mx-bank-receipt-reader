@@ -3,9 +3,13 @@
 <head>
     <meta charset="utf-8" />
     <title>Demo lib</title>
+    <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+    </script>
 </head>
 <body>
-<input type="file" id="file" accept="image/*" />
+<input type="file" id="file" accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf" />
 <pre id="out"></pre>
 
 <script src="./dist/bank-receipt-reader.browser.js"></script>

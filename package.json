@@ -1,6 +1,6 @@
 {
-  "name": "mx-bank-receipt-reader",
-  "version": "0.0.1",
+  "name": "@metolabs/mx-bank-receipt-reader",
+  "version": "0.0.2",
   "description": "A library for reading and extracting data from Mexican bank receipts (browser and Node.js compatible)",
   "type": "module",
   "main": "dist/bank-receipt-reader.cjs",
@@ -22,22 +22,20 @@
     "LICENSE"
   ],
   "bin": {
-    "bank-reader": "./cli.js"
+    "bank-reader": "cli.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/MetoLabs/mx-bank-receipt-reader.git"
+    "url": "git+https://github.com/MetoLabs/mx-bank-receipt-reader.git"
   },
-  "author": {
-    "name": "Geradrum",
-    "url": "https://github.com/geradrum"
-  },
+  "author": "Geradrum (https://github.com/geradrum)",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "pdfjs-dist": "^5.4",
     "tesseract.js": "^6.0.1",
     "yargs": "^17.7.2"
   },
@@ -63,5 +61,9 @@
     "tesseract",
     "ocr-reader"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MetoLabs/mx-bank-receipt-reader/issues"
+  },
+  "homepage": "https://github.com/MetoLabs/mx-bank-receipt-reader#readme"
 }
