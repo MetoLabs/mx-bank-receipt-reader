@@ -16,9 +16,7 @@ import ScotiabankSpeiProcessor from './processors/scotiabank/scotiabank-spei-pro
 class BankReceiptReader {
     constructor() {
         this.processors = this._initializeProcessors();
-
         this.pdfjs = null;
-
         this.pdfWorkerSrc = null;
     }
 
@@ -149,48 +147,6 @@ class BankReceiptReader {
                 ],
             },
             {
-                name: 'banbajio_spei',
-                patterns: [
-                    /Banco del Bajío S.A./i,
-                    /BajioNet/i,
-                    /RFC: BBA940707IE1/i,
-                    /Transferencia Interbancaria SPEI/i,
-                ],
-            },
-            {
-                name: 'banorte_spei',
-                patterns: [
-                    /Transferencias \/ Otros Bancos Nacional - SPEI \(Mismo día\)/i,
-                    /Banco Destino\s*[A-Z]/i,
-                    /Clave de Rastreo\s*\d{20,}/i,
-                ],
-            },
-            {
-                name: 'banorte_third_party',
-                patterns: [
-                    /Transferencias a Cuentas de Terceros Banorte/i,
-                    /Titular de la Cuenta/i,
-                    /ID Tercero\s*AFB/i,
-                ],
-            },
-            {
-                name: 'banregio_spei',
-                patterns: [
-                    /Tipo de Transferencia\s*Mismo día hábil \(SPEI\)/i,
-                    /Fecha de operación SPEI/i,
-                    /Banco\s*SANTANDER/i,
-                    /Clave de rastreo/i,
-                ],
-            },
-            {
-                name: 'banregio_third_party',
-                patterns: [
-                    /Cuenta Origen Cuenta Destino Cantidad a Transferir Descripcion/i,
-                    /Banregio/i,
-                    /Verificador\s*[A-Z]/i,
-                ],
-            },
-            {
                 name: 'bbva_spei',
                 patterns: [
                     /BNET[0-9A-Za-z]{20}/i
@@ -203,11 +159,31 @@ class BankReceiptReader {
                 ],
             },
             {
+                name: 'banbajio_spei',
+                patterns: [
+                    /Banco del Bajío S.A./i,
+                    /BajioNet/i,
+                    /RFC: BBA940707IE1/i,
+                ],
+            },
+            {
+                name: 'banorte_spei',
+                patterns: [
+                    /Transferencias \/ Otros Bancos Nacional - SPEI \(Mismo día\)/i,
+                ],
+            },
+            {
+                name: 'banorte_third_party',
+                patterns: [
+                    /Transferencias a Cuentas de Terceros Banorte/i,
+                    /ID Tercero\s*AFB/i,
+                ],
+            },
+            {
                 name: 'scotiabank_spei',
                 patterns: [
                     /Scotiabank Inverlat S.A./i,
                     /Impresión de Comprobante de Traspasos Otros Bancos/i,
-                    /Clave de Rastreo\s*\d{25,}/i
                 ],
             },
             {
@@ -222,7 +198,6 @@ class BankReceiptReader {
                 patterns: [
                     /Tipo de Operación:\s*TRANSFERENCIA INTERBANCARIA/i,
                     /Estado:\s*ENVIADA/i,
-                    /Cuenta Cargo:\s*\d+\s*-\s*[A-Z]/i,
                 ],
             },
             {
@@ -233,6 +208,20 @@ class BankReceiptReader {
                     /Clave\s+de\s+rastreo\s*HSBC/i,
                     /Narrativa\s+adicional\s*CGO\s+SPEI/i,
                     /Nombre\s+del\s+banco\s*HSBC/i
+                ],
+            },
+            {
+                name: 'banregio_spei',
+                patterns: [
+                    /Tipo de Transferencia\s*Mismo día hábil \(SPEI\)/i,
+                    /Fecha de operación SPEI/i,
+                ],
+            },
+            {
+                name: 'banregio_third_party',
+                patterns: [
+                    /Cuenta Origen Cuenta Destino Cantidad a Transferir Descripcion/i,
+                    /Verificador\s*[A-Z]/i,
                 ],
             },
         ];

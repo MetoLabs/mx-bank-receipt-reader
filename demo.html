@@ -5,7 +5,7 @@
     <title>Demo lib</title>
     <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+        window.pdfjsLibWorker = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     </script>
 </head>
 <body>
@@ -22,6 +22,8 @@
         if (!file) return;
 
         const reader = new BankReceiptReader();
+        reader.setPdfJs(window.pdfjsLib);
+        reader.setPdfWorkerSrc(window.pdfjsLibWorker);
         out.textContent = "Procesando...";
         const result = await reader.readReceipt(file);
         out.textContent = JSON.stringify(result, null, 2);
