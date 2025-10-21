@@ -1,5 +1,5 @@
 import { createWorker } from 'tesseract.js';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
+import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 
 import AfirmeSpeiProcessor from './processors/afirme/afirme-spei-processor.js';
 import BanbajioSpeiProcessor from './processors/banbajio/banbajio-spei-processor.js';
@@ -69,15 +69,10 @@ class BankReceiptReader {
 
         const arrayBuffer = await file.arrayBuffer();
 
-        const workerBlob = new Blob(
-            [`importScripts('https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.js');`],
-            { type: 'application/javascript' }
-        );
-        const workerUrl = URL.createObjectURL(workerBlob);
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+        pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
         try {
-            const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
 
             let fullText = '';
 
