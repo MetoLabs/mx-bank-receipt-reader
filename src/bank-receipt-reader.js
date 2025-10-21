@@ -1,5 +1,4 @@
 import { createWorker } from 'tesseract.js';
-import * as pdfjs from 'pdfjs-dist/build/pdf.mjs';
 
 import AfirmeSpeiProcessor from './processors/afirme/afirme-spei-processor.js';
 import BanbajioSpeiProcessor from './processors/banbajio/banbajio-spei-processor.js';
@@ -17,6 +16,29 @@ import ScotiabankSpeiProcessor from './processors/scotiabank/scotiabank-spei-pro
 class BankReceiptReader {
     constructor() {
         this.processors = this._initializeProcessors();
+
+        this.pdfjs = null;
+
+        this.pdfWorkerSrc = null;
+    }
+
+    /**
+     * Set pdfjs library instance (from user)
+     * @param {any} pdfjsLib
+     */
+    setPdfJs(pdfjsLib) {
+        this.pdfjs = pdfjsLib;
+    }
+
+    /**
+     * Set worker source URL (from user)
+     * @param {string} workerSrc
+     */
+    setPdfWorkerSrc(workerSrc) {
+        this.pdfWorkerSrc = workerSrc;
+        if (this.pdfjs) {
+            this.pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        }
     }
 
     /**
@@ -63,33 +85,25 @@ class BankReceiptReader {
      * @returns {Promise<string>} Extracted text from the PDF
      */
     async extractTextFromPdf(file) {
-        if (typeof window === 'undefined') {
-            throw new Error('PDF processing is only supported in browser environment');
+        if (!this.pdfjs) {
+            throw new Error('pdfjsLib not set. Call setPdfJs() first.');
+        }
+        if (!this.pdfWorkerSrc) {
+            throw new Error('PDF worker not set. Call setPdfWorkerSrc() first.');
         }
 
         const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await this.pdfjs.getDocument({ data: arrayBuffer }).promise;
 
-        pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-
-        try {
-            const pdfDoc = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-
-            let fullText = '';
-
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
-                const page = await pdfDoc.getPage(i);
-                const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
-                fullText += pageText + '\n';
-                page.cleanup?.();
-            }
-
-            pdfDoc.destroy?.();
-            URL.revokeObjectURL(workerUrl);
-            return fullText.trim();
-        } catch (error) {
-            throw new Error(`Failed to extract PDF text: ${error.message}`);
+        let fullText = '';
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            fullText += textContent.items.map(item => item.str).join(' ') + '\n';
         }
+
+        pdfDoc.destroy?.();
+        return fullText.trim();
     }
 
     /**
@@ -244,7 +258,6 @@ class BankReceiptReader {
     async readReceipt(file) {
         try {
             const text = await this.extractText(file);
-            console.log(text);
             const bankInfo = this.identifyBank(text);
 
             if (!bankInfo) return { success: false, error: 'Unknown bank type' };
