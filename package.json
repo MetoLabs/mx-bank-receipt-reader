@@ -1,6 +1,6 @@
 {
   "name": "@metolabs/mx-bank-receipt-reader",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "A library for reading and extracting data from Mexican bank receipts (browser and Node.js compatible)",
   "type": "module",
   "main": "dist/bank-receipt-reader.cjs",
