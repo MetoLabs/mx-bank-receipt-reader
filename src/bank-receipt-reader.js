@@ -66,8 +66,8 @@ class BankReceiptReader {
             throw new Error('PDF processing is only supported in browser environment');
         }
 
-        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
-        const workerSrc = await import('pdfjs-dist/legacy/build/pdf.worker.js?url');
+        const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
+        const workerSrc = await import('pdfjs-dist/build/pdf.worker.mjs');
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default;
 
