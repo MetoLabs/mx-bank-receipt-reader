@@ -57,7 +57,7 @@ class BankReceiptReader {
     }
 
     /**
-     * Extracts text from a PDF using pdfjs-dist
+     * Extracts text from a PDF using pdfjs-dist (browser-only)
      * @param {File} file - PDF file to extract text from
      * @returns {Promise<string>} Extracted text from the PDF
      */
@@ -66,19 +66,19 @@ class BankReceiptReader {
             throw new Error('PDF processing is only supported in browser environment');
         }
 
-        if (!window.pdfjsLib) {
-            throw new Error('PDF.js library not loaded. Please include PDF.js in your HTML.');
-        }
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
+        const workerSrc = await import('pdfjs-dist/legacy/build/pdf.worker.js?url');
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default;
 
         const arrayBuffer = await file.arrayBuffer();
-        const pdfjsLib = window.pdfjsLib;
 
         try {
             console.log('Loading PDF document...');
 
             const pdfDoc = await pdfjsLib.getDocument({
                 data: arrayBuffer,
-                disableWorker: true,
+                disableWorker: false,
             }).promise;
 
             console.log(`PDF loaded successfully. Pages: ${pdfDoc.numPages}`);
@@ -91,18 +91,12 @@ class BankReceiptReader {
                 const textContent = await page.getTextContent();
                 const pageText = textContent.items.map(item => item.str).join(' ');
                 fullText += pageText + '\n';
-
-                if (page.cleanup) {
-                    page.cleanup();
-                }
+                page.cleanup?.();
             }
 
-            if (pdfDoc.destroy) {
-                await pdfDoc.destroy();
-            }
+            pdfDoc.destroy?.();
 
             return fullText.trim();
-
         } catch (error) {
             console.error('PDF extraction failed:', error);
             throw new Error(`Failed to extract PDF text: ${error.message}`);
