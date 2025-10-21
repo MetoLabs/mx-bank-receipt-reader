@@ -1,4 +1,5 @@
 import { createWorker } from 'tesseract.js';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.mjs';
 
 import AfirmeSpeiProcessor from './processors/afirme/afirme-spei-processor.js';
 import BanbajioSpeiProcessor from './processors/banbajio/banbajio-spei-processor.js';
@@ -66,30 +67,21 @@ class BankReceiptReader {
             throw new Error('PDF processing is only supported in browser environment');
         }
 
-        const pdfjsLib = await import('pdfjs-dist/build/pdf.mjs');
-        const workerSrc = await import('pdfjs-dist/build/pdf.worker.mjs');
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc.default;
-
         const arrayBuffer = await file.arrayBuffer();
 
         try {
             console.log('Loading PDF document...');
-
             const pdfDoc = await pdfjsLib.getDocument({
                 data: arrayBuffer,
-                disableWorker: false,
+                disableWorker: true,
             }).promise;
-
-            console.log(`PDF loaded successfully. Pages: ${pdfDoc.numPages}`);
 
             let fullText = '';
 
             for (let i = 1; i <= pdfDoc.numPages; i++) {
-                console.log(`Processing page ${i}...`);
                 const page = await pdfDoc.getPage(i);
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map(item => item.str).join(' ');
+                const pageText = textContent.items.map((item) => item.str).join(' ');
                 fullText += pageText + '\n';
                 page.cleanup?.();
             }
@@ -98,7 +90,6 @@ class BankReceiptReader {
 
             return fullText.trim();
         } catch (error) {
-            console.error('PDF extraction failed:', error);
             throw new Error(`Failed to extract PDF text: ${error.message}`);
         }
     }

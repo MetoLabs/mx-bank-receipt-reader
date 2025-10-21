@@ -25,7 +25,7 @@ export default [
             format: 'iife',
             name: 'BankReceiptReader',
             interop: 'default',
-            sourcemap: true,
+            sourcemap: false, // DESACTIVA sourcemap para IIFE
         },
         plugins: [
             ...commonPlugins,
