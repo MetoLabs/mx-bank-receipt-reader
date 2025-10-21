@@ -69,25 +69,28 @@ class BankReceiptReader {
 
         const arrayBuffer = await file.arrayBuffer();
 
+        const workerBlob = new Blob(
+            [`importScripts('https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjsLib.version}/legacy/build/pdf.worker.js');`],
+            { type: 'application/javascript' }
+        );
+        const workerUrl = URL.createObjectURL(workerBlob);
+        pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
+
         try {
-            console.log('Loading PDF document...');
-            const pdfDoc = await pdfjsLib.getDocument({
-                data: arrayBuffer,
-                disableWorker: true,
-            }).promise;
+            const pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
             let fullText = '';
 
             for (let i = 1; i <= pdfDoc.numPages; i++) {
                 const page = await pdfDoc.getPage(i);
                 const textContent = await page.getTextContent();
-                const pageText = textContent.items.map((item) => item.str).join(' ');
+                const pageText = textContent.items.map(item => item.str).join(' ');
                 fullText += pageText + '\n';
                 page.cleanup?.();
             }
 
             pdfDoc.destroy?.();
-
+            URL.revokeObjectURL(workerUrl);
             return fullText.trim();
         } catch (error) {
             throw new Error(`Failed to extract PDF text: ${error.message}`);
