@@ -105,7 +105,90 @@ class BankReceiptReader {
     }
 
     /**
-     * Detects the input type and extracts text accordingly
+     * Extracts images from PDF and performs OCR on them
+     * @param {File} file - PDF file to extract images from
+     * @returns {Promise<string>} Extracted text from all images in the PDF
+     */
+    async extractTextFromPdfWithImages(file) {
+        if (!this.pdfjs) {
+            throw new Error('pdfjsLib not set. Call setPdfJs() first.');
+        }
+        if (!this.pdfWorkerSrc) {
+            throw new Error('PDF worker not set. Call setPdfWorkerSrc() first.');
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await this.pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+        let fullText = '';
+
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+
+            if (pageText.trim().length > 0) {
+                fullText += pageText + '\n';
+            }
+        }
+
+        if (fullText.trim().length < 100) {
+            const imageText = await this.extractTextFromPdfImages(pdfDoc);
+            fullText += imageText;
+        }
+
+        pdfDoc.destroy?.();
+        return fullText.trim();
+    }
+
+    /**
+     * Extracts images from PDF pages and performs OCR
+     * @param {any} pdfDoc - PDF document object
+     * @returns {Promise<string>} Extracted text from all images
+     */
+    async extractTextFromPdfImages(pdfDoc) {
+        let extractedText = '';
+        const worker = await createWorker('spa+eng', 3);
+
+        try {
+            await worker.setParameters({
+                tessedit_pageseg_mode: '11',
+            });
+
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                const blob = await new Promise(resolve => {
+                    canvas.toBlob(resolve, 'image/png', 1.0);
+                });
+
+                if (blob) {
+                    const result = await worker.recognize(blob);
+                    extractedText += result.data.text + '\n';
+                }
+
+                page.cleanup();
+            }
+        } finally {
+            await worker.terminate();
+        }
+
+        return extractedText;
+    }
+
+    /**
+     * Enhanced extractText method that handles both text and image-based PDFs
      * @param {string|File|Blob} file - Input file (image URL, File, or Blob)
      * @returns {Promise<string>} Extracted text from the input
      * @throws {Error} When input type is invalid or unsupported
@@ -122,7 +205,7 @@ class BankReceiptReader {
         const mimeType = file.type.toLowerCase();
 
         if (mimeType === 'application/pdf') {
-            return this.extractTextFromPdf(file);
+            return this.extractTextFromPdfWithImages(file);
         }
 
         if (mimeType === 'image/jpeg' || mimeType === 'image/png') {
