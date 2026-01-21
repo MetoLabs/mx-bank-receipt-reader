@@ -221,6 +221,7 @@ class BankReceiptReader {
      * @returns {Object|null} Object containing bank name, type and processor, or null if not identified
      */
     identifyBank(text) {
+        console.log(text);
         const bankPatterns = [
             {
                 name: 'afirme_spei',
@@ -252,6 +253,7 @@ class BankReceiptReader {
             {
                 name: 'banorte_spei',
                 patterns: [
+                    /([A-Z0-9]{4}APR[12]\d+)/,
                     /Transferencias \/ Otros Bancos Nacional - SPEI \(Mismo día\)/i,
                 ],
             },
@@ -260,6 +262,7 @@ class BankReceiptReader {
                 patterns: [
                     /Transferencias a Cuentas de Terceros Banorte/i,
                     /ID Tercero\s*AFB/i,
+
                 ],
             },
             {
@@ -296,6 +299,7 @@ class BankReceiptReader {
             {
                 name: 'banregio_spei',
                 patterns: [
+                    /(\d{3}-\d{2}\/\d{2}\/\d{4}\/\d{2}-[A-Z0-9]+)/,
                     /Tipo de Transferencia\s*Mismo día hábil \(SPEI\)/i,
                     /Fecha de operación SPEI/i,
                 ],

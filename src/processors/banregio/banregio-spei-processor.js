@@ -87,7 +87,7 @@ class BanregioSpeiProcessor extends BaseProcessor {
      */
     tracking_key(text) {
         const patterns = [
-            /Tu clave de rastreo\s*([A-Za-z0-9]+)/i,
+            /(\d{3}-\d{2}\/\d{2}\/\d{4}\/\d{2}-[A-Z0-9]+)/,
         ];
         return this._extractWithPatterns(text, patterns);
     }

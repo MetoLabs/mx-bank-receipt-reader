@@ -77,7 +77,7 @@ class AfirmeSpeiProcessor extends BaseProcessor {
      * @param {string} text - The receipt text to extract from
      * @returns {string|null} The tracking key or null if not found
      */
-    trackingKey(text) {
+    tracking_key(text) {
         const patterns = [
             /Clave de rastreo\s*(\d+)/i,
             /Clave.*rastreo\s*(\d{25,30})/i,
