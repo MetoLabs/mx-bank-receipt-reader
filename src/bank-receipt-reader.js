@@ -273,17 +273,18 @@ class BankReceiptReader {
                 ],
             },
             {
-                name: 'santander_third_party',
+                name: 'santander_spei',
                 patterns: [
-                    /Tipo de Operación:\s*Consulta de Movimientos/i,
-                    /Descripción:\s*CGO TRANS ELEC/i,
+                    /Clave de Rastreo:\s*[A-Z0-9]{20,40}/i,
+                    /Cuenta CLABE Beneficiario:\s*\d{18}/i,
+                    /Banco Participante:/i,
                 ],
             },
             {
-                name: 'santander_spei',
+                name: 'santander_third_party',
                 patterns: [
-                    /Tipo de Operación:\s*TRANSFERENCIA INTERBANCARIA/i,
-                    /Estado:\s*ENVIADA/i,
+                    /Transferencias a cuentas Santander/i,
+                    /Traspaso entre cuentas Santander/i,
                 ],
             },
             {

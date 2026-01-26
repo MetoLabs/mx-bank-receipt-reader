@@ -54,6 +54,19 @@ class SantanderSpeiProcessor extends BaseProcessor {
     }
 
     /**
+     * Extracts the tracking key from the receipt text.
+     */
+    tracking_key(text) {
+        const patterns = [
+            /Clave de Rastreo:\s*([A-Z0-9]{20,40})/i
+        ];
+
+        const result = this._extractWithPatterns(text, patterns);
+
+        return result ? result.trim() : null;
+    }
+
+    /**
      * Extracts the operation date from the receipt text.
      *
      * @param {string} text - The receipt text to extract from
