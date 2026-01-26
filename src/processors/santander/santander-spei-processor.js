@@ -9,11 +9,18 @@ class SantanderSpeiProcessor extends BaseProcessor {
      */
     account_id(text) {
         const patterns = [
-            /Cuenta Cargo:\s*([^:\n\r]+?)\s{2,}Cuenta Abono:/i,
-            /Cuenta Cargo:\s*(\d+)/i,
+            // Nombre + número (caso real Santander)
+            /Cuenta de Cargo:\s*[A-ZÁÉÍÓÚÑ\s\.]+?\s+(\d{10,18})\s+/i,
+
+            // Cuenta numérica directa
+            /Cuenta Cargo:\s*(\d{10,18})/i,
         ];
-        const result = this._extractWithPatterns(text, patterns);
-        return result ? result.trim() : null;
+
+        let result = this._extractWithPatterns(text, patterns);
+
+        if (!result) return null;
+
+        return result.replace(/\D/g, '') || null;
     }
 
     /**
