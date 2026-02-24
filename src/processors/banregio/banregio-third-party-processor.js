@@ -27,11 +27,21 @@ class BanregioThirdPartyProcessor extends BaseProcessor {
      * Extracts the reference number from the receipt text.
      */
     reference(text) {
-        const patterns = [
-            /Transferencia\s*([A-Za-z0-9-]+)/i,
-            /fIzZ8q-UcN/i,
-        ];
-        return this._extractWithPatterns(text, patterns);
+        const anchored =
+            text.match(
+                /Datos\s+de\s+tu\s+operaci[oó]n[\s\S]*?([A-Za-z0-9]{6,})\s*-\s*\d{2}-\d{2}-\d{4}/i
+            ) ||
+            text.match(
+                /Datos\s+de\s+tu\s+operacion[\s\S]*?([A-Za-z0-9]{6,})\s*-\s*\d{2}-\d{2}-\d{4}/i
+            );
+
+        if (anchored?.[1]) return anchored[1].trim();
+
+        const fallback = text.match(
+            /([A-Za-z0-9]{6,})\s*-\s*\d{2}-\d{2}-\d{4}(?:\s+\d{2}:\d{2})?/i
+        );
+
+        return fallback?.[1]?.trim() ?? null;
     }
 
     /**
@@ -84,7 +94,7 @@ class BanregioThirdPartyProcessor extends BaseProcessor {
      * Extracts the operation type from the receipt text.
      */
     operation_type(text) {
-        return "Transferencia a Terceros";
+        return 'third_party';
     }
 }
 

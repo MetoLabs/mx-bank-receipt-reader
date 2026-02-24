@@ -221,7 +221,6 @@ class BankReceiptReader {
      * @returns {Object|null} Object containing bank name, type and processor, or null if not identified
      */
     identifyBank(text) {
-        console.log(text);
         const bankPatterns = [
             {
                 name: 'afirme_spei',
@@ -308,8 +307,12 @@ class BankReceiptReader {
             {
                 name: 'banregio_third_party',
                 patterns: [
-                    /Cuenta Origen Cuenta Destino Cantidad a Transferir Descripcion/i,
-                    /Verificador\s*[A-Z]/i,
+                    /banregio/i,
+                    /recibo\s+de\s+la\s+transferencia/i,
+                    /datos\s+de\s+tu\s+operaci[oó]n/i,
+                    /cuenta\s+origen/i,
+                    /cuenta\s+destino/i,
+                    /cantidad\s+a\s+transferir/i,
                 ],
             },
         ];
